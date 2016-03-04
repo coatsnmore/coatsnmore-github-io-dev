@@ -18,6 +18,7 @@ PixiGame.sceneController = null;
 // Physics
 PixiGame.world = null;
 
+// Controls
 PixiGame.controls = null;
 
 PixiGame.Controller = function(Scene) {
@@ -157,6 +158,17 @@ PixiGame.MainMenuScene.constructor = PixiGame.MainMenuScene;
 PixiGame.MainMenuScene.prototype = Object.create(PIXI.Graphics.prototype);
 
 PixiGame.MainMenuScene.prototype.setup = function() {
+
+    // game title
+    var scoreText = new PIXI.Text('Evolution', {
+        font: '48px Arial',
+        fill: 0xff1010,
+        align: 'center',
+    });
+    scoreText.x = PixiGame.width / 2 - 30;
+    scoreText.y = PixiGame.height / 2 - 100;
+    this.addChildAt(scoreText, 0);
+
     this._playButton = new PIXI.Sprite.fromImage('images/game/play-game-btn.png');
     this._playButton.anchor = new PIXI.Point(0.5, 0.5);
     this._playButton.position.x = PixiGame.width / 2;
@@ -182,6 +194,8 @@ PixiGame.GameScene = function() {
     PIXI.Graphics.call(this);
 
     this._player = {
+        score: 0,
+        health: 100,
         body: null,
         shape: null,
         graphics: null,
@@ -201,7 +215,7 @@ PixiGame.GameScene = function() {
         speed: 75,
         size: 50,
         amount: 0,
-        max: 20
+        max: 10
     };
 
     this.setup();
@@ -211,8 +225,57 @@ PixiGame.GameScene.constructor = PixiGame.GameScene;
 PixiGame.GameScene.prototype = Object.create(PIXI.Graphics.prototype);
 
 PixiGame.GameScene.prototype.setup = function() {
+    this.hud().setup();
     this.setupPlayer();
     this.setupEnemies();
+};
+
+PixiGame.GameScene.prototype.hud = function() {
+    var scene = this;
+    var hud = {
+        position: [20, 20],
+        setup: function() {
+            var hudContainer = new PIXI.Container();
+            hudContainer.x = this.position[0];
+            hudContainer.y = this.position[1];
+            this.score.redraw(hudContainer);
+            this.health.redraw(hudContainer);
+            scene.addChildAt(hudContainer, 0);
+        },
+        score: {
+            text: 'Score: ',
+            update: function(scoreAdd) {
+                scene._player.score += scoreAdd;
+                scene.getChildAt(0).getChildAt(0).text = this.text + scene._player.score;
+            },
+            redraw: function(container) {
+                var scoreText = new PIXI.Text(this.text + scene._player.score, {
+                    font: '24px Arial',
+                    fill: 0xff1010,
+                    align: 'center',
+                });
+                container.addChildAt(scoreText, 0);
+            }
+        },
+        health: {
+            text: 'Health: ',
+            update: function(healthAdd) {
+                scene._player.health += healthAdd;
+                scene.getChildAt(0).getChildAt(1).text = this.text + Math.round(scene._player.health);
+            },
+            redraw: function(container) {
+                var healthText = new PIXI.Text(this.text + scene._player.health, {
+                    font: '24px Arial',
+                    fill: 0xff1010,
+                    align: 'center'
+                });
+                healthText.y = 25;
+                container.addChildAt(healthText, 1);
+            }
+        }
+    };
+
+    return hud;
 };
 
 PixiGame.GameScene.prototype.playerFire = function() {
@@ -266,6 +329,10 @@ PixiGame.GameScene.prototype.setupEnemies = function() {
 
     // for (var i = 0; i < enemies.max; i++) {
     var enemyTimer = setInterval(function() {
+        if (enemies.amount >= enemies.max) {
+            return;
+        }
+
         var x = Math.round(Math.random() * PixiGame.width);
         var y = Math.round(Math.random() * PixiGame.height);
         var vx = (Math.random() - 0.5) * enemies.speed;
@@ -281,7 +348,7 @@ PixiGame.GameScene.prototype.setupEnemies = function() {
                 velocity: [vx, vy],
                 angularVelocity: va
             }),
-            graphicsContainer: new PIXI.Container()
+            graphics: new PIXI.Container()
         };
 
         var enemyShape = new p2.Circle({
@@ -294,10 +361,11 @@ PixiGame.GameScene.prototype.setupEnemies = function() {
         enemyGraphics.beginFill(0x7AE68A);
         enemyGraphics.drawCircle(0, 0, enemies.size);
         enemyGraphics.endFill();
-        enemy.graphicsContainer.addChild(enemyGraphics);
-        this.addChild(enemy.graphicsContainer);
+        enemy.graphics.addChild(enemyGraphics);
+        this.addChild(enemy.graphics);
 
         enemies.collection.push(enemy);
+        enemies.amount++;
     }.bind(this), 1000);
     // }
 };
@@ -425,6 +493,20 @@ PixiGame.GameScene.prototype.update = function() {
         this.playerFire();
     }
 
+    var warp = function(body, x, y) {
+        if (x < 0) {
+            body.position[0] = PixiGame.width;
+        } else if (x > PixiGame.width) {
+            body.position[0] = 0;
+        }
+
+        if (y < 0) {
+            body.position[1] = PixiGame.height;
+        } else if (y > PixiGame.height) {
+            body.position[1] = 0;
+        }
+    };
+
     // move bullets
     for (var j = 0; j < bullets.length; j++) {
         var bullet = bullets[j];
@@ -445,8 +527,10 @@ PixiGame.GameScene.prototype.update = function() {
         // enemy.body.force[0] = this._enemies.speed * Math.cos(enemyAngle);
         // enemy.body.force[1] = this._enemies.speed * Math.sin(enemyAngle);
 
-        enemy.graphicsContainer.x = enemy.body.position[0];
-        enemy.graphicsContainer.y = enemy.body.position[1];
+        enemy.graphics.x = enemy.body.position[0];
+        enemy.graphics.y = enemy.body.position[1];
+
+        warp(enemy.body, enemy.body.position[0], enemy.body.position[1]);
     }
 
     // player angles
@@ -469,20 +553,10 @@ PixiGame.GameScene.prototype.update = function() {
         playerEngine.alpha = 0;
     }
 
-    // test for boundaries
+    // warp player on boundaries
     var x = player.body.position[0],
         y = player.body.position[1];
-    if (x < 0) {
-        player.body.position[0] = PixiGame.width;
-    } else if (x > PixiGame.width) {
-        player.body.position[0] = 0;
-    }
-
-    if (y < 0) {
-        player.body.position[1] = PixiGame.height;
-    } else if (y > PixiGame.height) {
-        player.body.position[1] = 0;
-    }
+    warp(player.body, x, y);
 
     //update graphics
     player.graphics.x = player.body.position[0];
@@ -492,25 +566,134 @@ PixiGame.GameScene.prototype.update = function() {
     // handle collision
     PixiGame.world.on('beginContact', function(e) {
 
-        //player
-        if (e.bodyB.id === player.body.id) {
+        var containsBody = function(bodyCollection, idA, idB) {
+            for (var i = 0; i < bodyCollection.length; i++) {
+                if (bodyCollection[i].body.id === idA || bodyCollection[i].body.id === idB) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        // if player involved
+        if (e.bodyB.id === player.body.id || e.bodyA.id === player.body.id) {
             var hitShield = player.graphics.getChildAt(3);
             hitShield.alpha = 0.25;
+
+            // if enemy was also involved
+            if (containsBody(enemies, e.bodyA.id, e.bodyB.id)) {
+                this.hud().health.update(-0.1);
+            }
+        }
+
+        //enemies
+        for (var z = 0; z < enemies.length; z++) {
+            var enemy = enemies[z];
+            // if enemy was involved
+            if (e.bodyB.id === enemy.body.id || e.bodyA.id === enemy.body.id) {
+
+                //if player bullets were also involved
+                if (containsBody(player.bullets.collection, e.bodyA.id, e.bodyB.id)) {
+                    enemy.graphics.alpha = 0.1;
+                    // this.removeChild(enemy.graphics);
+                    var hitEnemy = enemies.splice(z, 1)[0];
+                    this.removeChild(hitEnemy.graphics);
+                    this._enemies.amount--;
+                    // this.score.update(5);
+                    this.hud().score.update(5);
+                }
+            }
         }
     }.bind(this));
 
     PixiGame.world.on('endContact', function(e) {
 
         //player
-        if (e.bodyB.id === player.body.id) {
+        if (e.bodyB.id === player.body.id || e.bodyA.id === player.body.id) {
             var hitShield = player.graphics.getChildAt(3);
             hitShield.alpha = 0;
         }
     }.bind(this));
+
+    // test game conditions
+    if (player.health < 0) {
+        console.log('game over');
+        PixiGame.score = player.score;
+        this.gameEnd();
+    }
+};
+
+PixiGame.GameScene.prototype.gameEnd = function(event) {
+    PixiGame.sceneController.requestSceneChange(PixiGame.EndGameScene);
 };
 
 PixiGame.GameScene.prototype.destroy = function() {
     this.removeChildren();
+};
+
+PixiGame.EndGameScene = function() {
+    PIXI.Graphics.call(this);
+
+    this._playButton = null;
+    this.setup();
+};
+
+PixiGame.EndGameScene.constructor = PixiGame.EndGameScene;
+PixiGame.EndGameScene.prototype = Object.create(PIXI.Graphics.prototype);
+
+PixiGame.EndGameScene.prototype.setup = function() {
+    this._playButton = new PIXI.Sprite.fromImage('images/game/play-game-btn.png');
+    this._playButton.anchor = new PIXI.Point(0.5, 0.5);
+    this._playButton.position.x = PixiGame.width / 2;
+    this._playButton.position.y = PixiGame.height / 2;
+    this._playButton.interactive = true;
+    this._playButton.touchstart = this._playButton.mousedown = this.handlePlayButtonPressed.bind(this);
+    console.log('this: ' + this);
+    this.addChild(this._playButton);
+
+    // display previous player score
+    var scoreText = new PIXI.Text('Current Score: ' + PixiGame.score, {
+        font: '24px Arial',
+        fill: 0xff1010,
+        align: 'center',
+    });
+    scoreText.x = PixiGame.width / 2 - 30;
+    scoreText.y = PixiGame.height / 2 - 100;
+    this.addChildAt(scoreText, 0);
+
+    // high score
+    if (PixiGame.score > PixiGame.highScore) {
+        PixiGame.highScore = PixiGame.score;
+        var newHighScoreText = new PIXI.Text('New High Score!', {
+            font: '24px Arial',
+            fill: 0xff1010,
+            align: 'center',
+        });
+        newHighScoreText.x = PixiGame.width / 2 - 30;
+        newHighScoreText.y = PixiGame.height / 2 - 150;
+        this.addChildAt(newHighScoreText, 0);
+    }
+
+
+    var highScoreText = new PIXI.Text('High Score: ' + PixiGame.score, {
+        font: '24px Arial',
+        fill: 0xff1010,
+        align: 'center',
+    });
+    highScoreText.x = PixiGame.width / 2 - 30;
+    highScoreText.y = PixiGame.height / 2 - 200;
+    this.addChildAt(highScoreText, 0);
+};
+
+PixiGame.EndGameScene.prototype.handlePlayButtonPressed = function(event) {
+    PixiGame.sceneController.requestSceneChange(PixiGame.GameScene);
+};
+
+PixiGame.EndGameScene.prototype.update = function() {};
+
+PixiGame.EndGameScene.prototype.destroy = function() {
+    this.removeChildren();
+    this._playButton = null;
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -537,6 +720,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // load initial scene
     PixiGame.sceneController = new PixiGame.SceneController(PixiGame.MainMenuScene);
+
+    // Game state
+    PixiGame.score = 0;
+    PixiGame.highScore = 0;
 
     // start game
     PixiGame.gameLoopController = new PixiGame.GameLoopController();
