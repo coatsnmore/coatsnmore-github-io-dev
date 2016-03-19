@@ -5,6 +5,8 @@
 // Create a global reference to the game so we can reference it.
 var PixiGame = PixiGame || {};
 
+var Utils = Utils || {};
+
 // Used by pixi
 PixiGame.stage = null;
 PixiGame.renderer = null;
@@ -20,6 +22,124 @@ PixiGame.world = null;
 
 // Controls
 PixiGame.controls = null;
+
+Utils.Colors = (function() {
+    var options = function(type) {
+        var color = {};
+        color.background = 0xD4CCBC;
+
+        switch (type) {
+            case 'attack':
+                color.font = 0xE34242;
+                color.box = 0xE34242;
+                break;
+            case 'conversation':
+                color.font = 0x4267E3;
+                color.box = 0x4267E3;
+                break;
+            case 'menu':
+                color.font = 0x000000;
+                color.box = 0x000000;
+                break;
+            case 'trade':
+                color.font = 0x3C8025;
+                color.box = 0x3C8025;
+                break;
+            default:
+                color.font = 0x000000;
+                color.box = 0x000000;
+        }
+        return color;
+    };
+
+    var health = function(type) {
+        var color = {
+            max: 0xD4909F,
+            actual: 0xC1D490,
+            font: 0x000000,
+            border: 0x000000
+        };
+        return color;
+    };
+
+    var hud = function(type) {
+        var color = {
+            background: 0xD4CCBC
+        };
+        return color;
+    };
+
+    var log = function(type) {
+        var color = {
+            background: 0xD4CCBC,
+            font: 0x000000
+        };
+        return color;
+    };
+
+    var turn = function(type) {
+        var color = {
+            background: 0xD4CCBC,
+            font: 0x000000
+        };
+        return color;
+    };
+
+    return {
+        options: options,
+        health: health,
+        hud: hud,
+        log: log,
+        turn: turn
+    };
+})();
+
+Utils.OptionFactory = (function() {
+    // var self = this,
+    // methods;
+
+    var createOption = function(option, index, optionSizeY, optionSizeX, type) {
+        var optionLineSize = 5;
+        var optionContainer = new PIXI.Container();
+        var colors = Utils.Colors.options;
+
+        // box
+        var optionBox = new PIXI.Graphics();
+        optionBox.beginFill(colors(type).background);
+        optionBox.lineStyle(optionLineSize, colors(type).box);
+        optionBox.drawRect(0, 0, optionSizeX, optionSizeY - optionLineSize);
+        optionBox.endFill();
+        optionBox.y = optionSizeY * index;
+        optionContainer.addChildAt(optionBox, 0);
+
+        // text
+        var optionText = new PIXI.Text(option.text, {
+            font: 'bold 20px Arial',
+            fill: colors(type).font,
+            align: 'center'
+        });
+
+        optionText.x = optionSizeX / 2;
+        optionText.y = (optionSizeY * index + optionLineSize) + optionSizeY / 3;
+        optionText.anchor.x = 0.5;
+        optionText.anchor.y = 0.5;
+        optionText.wordWrap = true;
+        optionText.wordWrapWidth = optionSizeX;
+        optionContainer.addChildAt(optionText, 1);
+
+        optionContainer.interactive = true;
+        optionContainer.touchstart = optionContainer.mousedown = option.action;
+
+        //extend for specific use
+        optionContainer.meta = option;
+
+        return optionContainer;
+    };
+
+    return {
+        createOption: createOption
+    };
+})();
 
 PixiGame.Controller = function(Scene) {
 
@@ -147,6 +267,169 @@ PixiGame.SceneController.prototype.requestSceneChange = function(Scene) {
     PixiGame.stage.addChild(this._currentScene);
 };
 
+PixiGame.BaseScene = (function() {
+    var base = this;
+    var hudX = 0,
+        hudY = 0,
+        hudSizeX = 0,
+        hudSizeY = 0;
+
+    var hud = function(self) {
+        hudY = PixiGame.height * (2 / 3);
+        // var optionsContainer = new PIXI.Container();
+        // var optionLineSize = 5;
+        hudSizeX = this.sizeX = PixiGame.width;
+        hudSizeY = this.sizeY = PixiGame.height / 3;
+        var hudContainer = new PIXI.Container();
+        var colors = Utils.Colors.hud();
+
+        // box
+        var hudBackground = new PIXI.Graphics();
+        hudBackground.beginFill(colors.background);
+        hudBackground.lineStyle(1, colors.background);
+        hudBackground.drawRect(0, 0, this.sizeX, this.sizeY);
+        hudBackground.endFill();
+        hudContainer.addChildAt(hudBackground, 0);
+
+        // this.position = [];
+        console.log(hudX);
+        console.log(hudY);
+        hudContainer.x = hudX;
+        hudContainer.y = hudY;
+        hudContainer.alpha = 0.5;
+
+        self.addChildAt(hudContainer, 0);
+
+        return this;
+    };
+
+    //horizontal
+    var menu = function(self) {
+        this.sizeX = 100;
+        this.sizeY = 55;
+        var options = [{
+            text: 'Menu',
+            action: mainMenu
+        }];
+        var optionSizeX = this.sizeX / options.length;
+
+
+        var optionsContainer = new PIXI.Container();
+        for (var oi = 0; oi < options.length; oi++) {
+            var option = Utils.OptionFactory.createOption(options[oi], oi, this.sizeY, this.sizeX, 'menu');
+            optionsContainer.addChild(option);
+        }
+
+        // position menu
+        optionsContainer.x = 0;
+        optionsContainer.y = PixiGame.height - this.sizeY + 5;
+        self.addChildAt(optionsContainer, 1);
+        return this;
+    };
+
+    var mainMenu = function(event) {
+        PixiGame.sceneController.requestSceneChange(PixiGame.MainMenuScene);
+    };
+
+    var log = function(self) {
+        var colors = Utils.Colors.log();
+        var logDamageText;
+        var logActionText;
+        var logContainer = new PIXI.Container();
+
+        // box
+        var logBox = new PIXI.Graphics();
+        logBox.beginFill(colors.background);
+        logBox.lineStyle(1, colors.background);
+        logBox.drawRect(0, 0, PixiGame.width / 3, hudSizeY / 2);
+        logBox.endFill();
+        logBox.y = 0;
+        logContainer.addChildAt(logBox, 0);
+
+        this.drawDamage = function() {
+            logDamageText = new PIXI.Text('', {
+                font: '24px Arial',
+                fill: colors.font,
+                align: 'center'
+            });
+            logDamageText.x = 0;
+            logDamageText.y = 0;
+            logContainer.addChildAt(logDamageText, 1);
+        }.bind(self);
+
+        this.drawDamage();
+
+        this.updateDamage = function(logItem) {
+            logDamageText.text = logItem;
+        }.bind(self);
+
+        this.drawAction = function() {
+            logActionText = new PIXI.Text('', {
+                font: '24px Arial',
+                fill: colors.font,
+                align: 'center'
+            });
+            logActionText.x = 0;
+            logActionText.y = 50;
+            logContainer.addChildAt(logActionText, 2);
+        }.bind(self);
+
+        this.drawAction();
+
+        this.updateAction = function(logItem) {
+            logActionText.text = logItem;
+        }.bind(self);
+
+        logContainer.x = hudX;
+        logContainer.y = hudY;
+
+        self.addChild(logContainer);
+
+        return this;
+    };
+
+    var turn = function(self) {
+        var colors = Utils.Colors.turn();
+
+        //player goes first
+        self._playerTurn = true;
+
+        var displayText = 'Turn: ';
+        var turnText;
+        this.draw = function() {
+            turnText = new PIXI.Text(displayText + 'Player', {
+                font: '24px Arial',
+                fill: colors.font,
+                align: 'center'
+            });
+            turnText.x = PixiGame.width * 2 / 3;
+            turnText.y = PixiGame.height - 50;
+            self.addChild(turnText);
+        }.bind(self);
+
+        this.draw();
+
+        this.update = function(isPlayerTurn) {
+            if (isPlayerTurn) {
+                turnText.text = displayText + 'Player';
+                self._combatContainer.active(true);
+            } else {
+                turnText.text = displayText + 'Enemy';
+                self._combatContainer.active(false);
+            }
+        }.bind(self);
+
+        return this;
+    };
+
+    return {
+        menu: menu,
+        log: log,
+        hud: hud,
+        turn: turn
+    };
+})();
+
 PixiGame.MainMenuScene = function() {
     PIXI.Graphics.call(this);
 
@@ -159,64 +442,42 @@ PixiGame.MainMenuScene.prototype = Object.create(PIXI.Graphics.prototype);
 
 PixiGame.MainMenuScene.prototype.setup = function() {
 
-    // game title
-    var titleText = new PIXI.Text('Evolution', {
-        font: '48px Arial',
-        fill: 0xff1010,
+    var menuWidth = PixiGame.width / 3;
+    var optionSizeY = 60;
+
+    var welcomeText = new PIXI.Text('Evolution Game Components', {
+        font: 'bold 48px Arial',
+        fill: 0xFFFFFF,
         align: 'center',
+        wordWrap: true,
+        wordWrapWidth: menuWidth
     });
-    titleText.x = PixiGame.width / 4 - 75;
-    titleText.y = PixiGame.height / 2 - 100;
-    this.addChildAt(titleText, 0);
+    welcomeText.x = menuWidth;
+    welcomeText.y = 10;
+    this.addChild(welcomeText);
 
-    this._playButton = new PIXI.Sprite.fromImage('images/game/play-game-btn.png');
-    this._playButton.anchor = new PIXI.Point(0.5, 0.5);
-    this._playButton.position.x = PixiGame.width / 4;
-    this._playButton.position.y = PixiGame.height / 2;
-    this._playButton.interactive = true;
-    this._playButton.touchstart = this._playButton.mousedown = this.handlePlayButtonPressed.bind(this);
-    console.log('this: ' + this);
-    this.addChild(this._playButton);
+    var options = [{
+        text: 'Space',
+        action: this.handlePlayButtonPressed.bind(this)
+    }, {
+        text: 'Conversation',
+        action: this.handleRPGPlayButtonPressed.bind(this)
+    }, {
+        text: 'Combat',
+        action: this.handleCombatPlayButtonPressed.bind(this)
+    }];
 
-    // game title
-    var rpgText = new PIXI.Text('RPG', {
-        font: '48px Arial',
-        fill: 0xff1010,
-        align: 'center',
-    });
-    rpgText.x = PixiGame.width / 2 - 75;
-    rpgText.y = PixiGame.height / 2 - 100;
-    this.addChildAt(rpgText, 0);
+    var optionsContainer = new PIXI.Container();
+    for (var oi = 0; oi < options.length; oi++) {
+        var option = Utils.OptionFactory.createOption(options[oi], oi, optionSizeY, menuWidth, 'menu');
+        optionsContainer.addChild(option);
+    }
 
-    this._playButton = new PIXI.Sprite.fromImage('images/game/play-game-btn.png');
-    this._playButton.anchor = new PIXI.Point(0.5, 0.5);
-    this._playButton.position.x = PixiGame.width / 2;
-    this._playButton.position.y = PixiGame.height / 2;
-    this._playButton.interactive = true;
-    this._playButton.touchstart = this._playButton.mousedown = this.handleRPGPlayButtonPressed.bind(this);
-    console.log('this: ' + this);
-    this.addChild(this._playButton);
-
-    // basic combat
-    var combatText = new PIXI.Text('Combat', {
-        font: '48px Arial',
-        fill: 0xff1010,
-        align: 'center',
-    });
-    combatText.x = PixiGame.width * (3 / 4) - 75;
-    combatText.y = PixiGame.height / 2 - 100;
-    this.addChildAt(combatText, 0);
-
-    this._playButton = new PIXI.Sprite.fromImage('images/game/play-game-btn.png');
-    this._playButton.anchor = new PIXI.Point(0.5, 0.5);
-    this._playButton.position.x = PixiGame.width * (3 / 4);
-    this._playButton.position.y = PixiGame.height / 2;
-    this._playButton.interactive = true;
-    this._playButton.touchstart = this._playButton.mousedown = this.handleCombatPlayButtonPressed.bind(this);
-    console.log('this: ' + this);
-    this.addChild(this._playButton);
+    // position menu
+    optionsContainer.x = PixiGame.width / 3;
+    optionsContainer.y = PixiGame.height / 3;
+    this.addChild(optionsContainer);
 };
-
 
 PixiGame.MainMenuScene.prototype.handleRPGPlayButtonPressed = function(event) {
     PixiGame.sceneController.requestSceneChange(PixiGame.RPGScene);
@@ -804,142 +1065,122 @@ PixiGame.RPGScene.prototype.destroy = function() {
 PixiGame.CombatScene = function() {
     PIXI.Graphics.call(this);
 
+    this._hud = PixiGame.BaseScene.hud(this);
+    this._menu = PixiGame.BaseScene.menu(this);
+    this._log = PixiGame.BaseScene.log(this);
+    this._turn = PixiGame.BaseScene.turn(this);
+
     this._player = {
-        health: 100
+        name: 'Player',
+        health: 100,
+        maxHealth: 100,
     };
 
     this._enemy = {
-        health: 100
+        name: 'Enemy',
+        health: 100,
+        maxHealth: 100
     };
 
     this._attacks = [{
-        text: 'punch 5 - 10',
+        text: 'laser 5 - 10',
         min: 5,
-        max: 10
+        max: 10,
+        action: this.handleCombatOptionTouch.bind(this)
     }, {
-        text: 'kick 1 - 20',
+        text: 'missile 1 - 20',
         min: 1,
-        max: 20
+        max: 20,
+        action: this.handleCombatOptionTouch.bind(this)
+    }, {
+        text: 'sabotage 7',
+        min: 7,
+        max: 7,
+        action: this.handleCombatOptionTouch.bind(this)
     }];
 
-    this._log = {};
-    this._turn = {};
     this._combatContainer = {};
 
     //do this last
     this.setup();
 };
 
-PixiGame.CombatScene.constructor = PixiGame.GameScene;
+PixiGame.CombatScene.constructor = PixiGame.CombatScene;
 PixiGame.CombatScene.prototype = Object.create(PIXI.Graphics.prototype);
 
 PixiGame.CombatScene.prototype.setup = function() {
-    this.setupTurn();
+    // this.setupTurn();
     this.setupCombat();
-    this.setupPlayerHealth();
-    this.setupEnemyHealth();
-    this.setupLog();
+    this.setupAllHealth();
+    // this.setupLog();
 };
 
-PixiGame.CombatScene.prototype.setupTurn = function() {
+PixiGame.CombatScene.prototype.setupAllHealth = function() {
+    // var playerHealthX = this._menu.sizeX;
+    this.setupHealth(this._player, this._menu.sizeX, PixiGame.height - 50);
+    this.setupHealth(this._enemy, (PixiGame.width * 2 / 3), 0);
+};
 
-    //player goes first
-    this._playerTurn = true;
+PixiGame.CombatScene.prototype.setupHealth = function(agent, healthX, healthY) {
+    var healthMargin = 5;
+    var healthWidth = (PixiGame.width / 3);
+    var healthHeight = 50;
+    var healthText;
+    var healthContainer = new PIXI.Container();
+    var maxHealthBox = new PIXI.Graphics();
+    var healthBox = new PIXI.Graphics();
+    agent.healthDraw = function() {
+        var colors = Utils.Colors.health();
 
-    var displayText = 'Turn: ';
-    var turnText;
-    this._turn.draw = function() {
-        turnText = new PIXI.Text(displayText + 'Player', {
+        // draw health bucket
+        maxHealthBox.beginFill(colors.max);
+        maxHealthBox.lineStyle(healthMargin, colors.border);
+        maxHealthBox.drawRect(0, 0, healthWidth, healthHeight);
+        maxHealthBox.endFill();
+        healthContainer.addChildAt(maxHealthBox, 0);
+
+        // actual health
+        healthBox.beginFill(colors.actual);
+        healthBox.lineStyle(healthMargin, colors.border);
+        healthBox.drawRect(0, 0, healthWidth, healthHeight);
+        healthBox.endFill();
+        healthContainer.addChildAt(healthBox, 1);
+
+        healthText = new PIXI.Text('' + agent.name, {
             font: '24px Arial',
-            fill: 'red',
-            align: 'center'
+            fill: colors.font,
+            align: 'center',
+            wordWrap: true,
+            wordWrapWidth: healthWidth
         });
-        turnText.x = PixiGame.width * 2 / 3;
-        turnText.y = PixiGame.height - 50;
-        this.addChild(turnText);
+
+        healthText.x = 5;
+        healthText.y = healthHeight / 3;
+        // healthText.y = 0;
+
+        healthContainer.addChildAt(healthText, 2);
+        healthContainer.x = healthX;
+        healthContainer.y = healthY;
+        this.addChild(healthContainer);
     }.bind(this);
 
-    this._turn.draw();
+    // console.log('agent: ' + agent);
+    agent.healthDraw();
 
-    this._turn.update = function(isPlayerTurn) {
-        if (isPlayerTurn) {
-            turnText.text = displayText + 'Player';
-            this._combatContainer.active(true);
+    agent.updateHealth = function(damage) {
+
+        //damage
+        agent.health -= damage;
+        // console.log(agent.name + ' health: ' + agent.health);
+
+        //update display
+        if (agent.health >= 0) {
+            healthBox.width = agent.health / agent.maxHealth * healthWidth;
         } else {
-            turnText.text = displayText + 'Enemy';
-            this._combatContainer.active(false);
+            healthBox.width = 0;
         }
-    }.bind(this);
-};
+        this._log.updateDamage(agent.name + ' damaged for ' + damage + '!!');
 
-PixiGame.CombatScene.prototype.setupLog = function() {
-    var logText;
-    // var  = 'Log: ';
-    this._log.draw = function() {
-        logText = new PIXI.Text('Log: ', {
-            font: '24px Arial',
-            fill: 'red',
-            align: 'center'
-        });
-        logText.x = 100;
-        logText.y = PixiGame.height - 50;
-        this.addChild(logText);
-    }.bind(this);
-
-    this._log.draw();
-
-    this._log.update = function(logItem) {
-        logText.text = logItem;
-    }.bind(this);
-};
-
-PixiGame.CombatScene.prototype.setupPlayerHealth = function() {
-    var playerHealthText;
-    var displayText = 'Player 1 Health: ';
-    this._player.healthDraw = function() {
-        playerHealthText = new PIXI.Text(displayText + this._player.health, {
-            font: '24px Arial',
-            fill: 'red',
-            align: 'center'
-        });
-        playerHealthText.x = 25;
-        playerHealthText.y = 25;
-        this.addChild(playerHealthText);
-    }.bind(this);
-    //
-    this._player.healthDraw();
-
-    this._player.updateHealth = function(damage) {
-
-        //damage
-        this._player.health -= damage;
-        playerHealthText.text = displayText + (this._player.health);
-        this._log.update('player damaged for ' + damage + '!!');
-    }.bind(this);
-};
-
-PixiGame.CombatScene.prototype.setupEnemyHealth = function() {
-    var enemyHealthText;
-    var displayText = 'Enemy Health: ';
-    this._enemy.healthDraw = function() {
-        enemyHealthText = new PIXI.Text(displayText + this._enemy.health, {
-            font: '24px Arial',
-            fill: 'red',
-            align: 'center'
-        });
-        enemyHealthText.x = 25;
-        enemyHealthText.y = 75;
-        this.addChild(enemyHealthText);
-    }.bind(this);
-    //
-    this._enemy.healthDraw();
-
-    this._enemy.updateHealth = function(damage) {
-
-        //damage
-        this._enemy.health -= damage;
-        enemyHealthText.text = displayText + (this._enemy.health);
-        this._log.update('enemy damaged for ' + damage + '!!');
     }.bind(this);
 };
 
@@ -947,16 +1188,17 @@ PixiGame.CombatScene.prototype.setupCombat = function() {
 
     var combatX = PixiGame.width * 2 / 3;
     var combatContainer = new PIXI.Container();
+    var optionSizeY = 60;
+    var optionSizeX = PixiGame.width / 3;
 
-    // var event = new CustomEvent('build', { 'playerTurn': elem.dataset.time });
-
-    // console.log('this._attacks.length;: ' + this._attacks.length);
     for (var ci = 0; ci < this._attacks.length; ci++) {
-        // console.log('convo[i]: ' + convo[ci]);
-        var combatOption = this.createCombatOption(this._attacks[ci], ci);
+        // var combatOption = this.createCombatOption(this._attacks[ci], ci);
+        var combatOption = Utils.OptionFactory.createOption(this._attacks[ci], ci, optionSizeY, optionSizeX, 'attack');
         combatContainer.addChildAt(combatOption, ci);
     }
-    combatContainer.x = combatX;
+    combatContainer.x = PixiGame.width * 2 / 3;
+    combatContainer.y = PixiGame.height * 2 / 3;
+    // combatContainer.y = 50;
     this.addChild(combatContainer);
 
     combatContainer.turnActive = this._playerTurn;
@@ -980,62 +1222,22 @@ PixiGame.CombatScene.prototype.setupCombat = function() {
     this._combatContainer = combatContainer;
 };
 
-PixiGame.CombatScene.prototype.createCombatOption = function(option, index) {
-
-    console.log('combat option: ' + option.text);
-    var optionSizeY = 60;
-    var optionSizeX = PixiGame.width / 3;
-    var optionLineSize = 5;
-    var optionContainer = new PIXI.Container();
-
-    var optionBox = new PIXI.Graphics();
-    optionBox.beginFill(0xFFFFFF);
-    optionBox.lineStyle(optionLineSize, 'red');
-    optionBox.drawRect(0, 0, optionSizeX, optionSizeY - optionLineSize);
-    optionBox.endFill();
-    optionBox.y = optionSizeY * index;
-    optionContainer.addChildAt(optionBox, 0);
-
-    var optionText = new PIXI.Text(option.text, {
-        font: '20px Lucia Console',
-        fill: 'red',
-        align: 'center',
-    });
-    optionText.x = optionLineSize;
-    optionText.y = optionSizeY * index + optionLineSize;
-    optionText.wordWrap = true;
-    optionText.wordWrapWidth = optionSizeX;
-    optionContainer.addChildAt(optionText, 1);
-
-    // console.log('this._playerTurn: ' + this._playerTurn);
-    console.log('combatoption.this: ' + this);
-    optionContainer.interactive = this._playerTurn;
-    optionContainer.touchstart = optionContainer.mousedown = this.handleCombatOptionTouch.bind(this);
-
-    // extend option pixi container
-    // optionContainer.oid = index;
-    optionContainer.meta = option;
-
-    return optionContainer;
-};
-
-//handleCombatOptionTouch
 PixiGame.CombatScene.prototype.handleCombatOptionTouch = function(e) {
     var min = e.target.meta.min;
     var max = e.target.meta.max;
     var damage = Math.floor(Math.random() * (max - min + 1)) + min;
+    this._log.updateAction('player performs ' + e.target.meta.text);
     this._enemy.updateHealth(damage);
-    // this._playerTurn = false;
     this._turn.update(false);
     this.enemyTurn();
 };
 
 PixiGame.CombatScene.prototype.enemyTurn = function(e) {
+    var enemyTurnTime = 500;
 
     var attackMin = 1,
         attackMax = this._attacks.length;
     var attackIndex = Math.floor(Math.random() * (attackMax - attackMin + 1)) + attackMin;
-    console.log('enemy attack: ' + (attackIndex - 1));
     var attack = this._attacks[attackIndex - 1];
     var min = attack.min,
         max = attack.max;
@@ -1043,16 +1245,17 @@ PixiGame.CombatScene.prototype.enemyTurn = function(e) {
 
     window.setTimeout(function() {
         this._player.updateHealth(damage);
+        this._log.updateAction('enemy performs ' + attack.text);
         this._turn.update(true);
         // console.log('enemy turn over');
-    }.bind(this), 1000);
+    }.bind(this), enemyTurnTime);
 };
 
 PixiGame.CombatScene.prototype.update = function() {
 
     // lose conditions
     if (this._player.health <= 0) {
-        console.log('ya lose brah');
+        // console.log('ya lose brah');
     }
 };
 
@@ -1130,6 +1333,9 @@ PixiGame.EndGameScene.prototype.destroy = function() {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
+
+    // Utilities first
+    // Utils.optionFactory = new Utils.OptionFactory();
 
     // is there a better way to find w/h? does this work on mobile?
     PixiGame.width = document.documentElement.clientWidth;
