@@ -165,8 +165,8 @@ PixiGame.Synth = PixiGame.Synth || (function() {
 
         var duration = 0.5,
             startTime = context.currentTime,
-            song = ['G3'],
-            oscillatorType = 'sine',
+            song = ['A2'],
+            oscillatorType = 'sawtooth',
             masterVolume = 0.1;
 
         for (var i = 0; i < song.length; i++) {
@@ -670,6 +670,9 @@ PixiGame.AnimationsScene.prototype.controls = function() {
     var menuWidth = PixiGame.width / 5;
     var optionSizeY = 40;
     var options = [{
+        text: 'Box Twitch',
+        action: this._box.twitch
+    }, {
         text: 'Box Right',
         action: this._box.moveRight
     }, {
@@ -749,6 +752,35 @@ PixiGame.AnimationsScene.prototype.box = function() {
                 box.y = this.y;
             })
             .start();
+    };
+
+    box.twitch = function() {
+        var coords = {
+            x: box.x,
+            y: box.y
+        };
+        var tweenRight = new TWEEN.Tween(coords)
+            .to({
+                x: coords.x + 10,
+                y: coords.y
+            }, 300)
+            .onUpdate(function() {
+                box.x = this.x;
+                box.y = this.y;
+            });
+        var tweenLeft = new TWEEN.Tween(coords)
+            .to({
+                x: coords.x - 10,
+                y: coords.y
+            }, 300)
+            .onUpdate(function() {
+                box.x = this.x;
+                box.y = this.y;
+            });
+
+        tweenRight.chain(tweenLeft);
+        tweenLeft.chain(tweenRight);
+        tweenRight.start();
     };
 
     return box;
