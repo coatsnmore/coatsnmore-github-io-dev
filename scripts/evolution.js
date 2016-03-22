@@ -23,6 +23,216 @@ PixiGame.world = null;
 // Controls
 PixiGame.controls = null;
 
+PixiGame.Notes = PixiGame.Notes || (function() {
+    var all = {
+        'C0': 16.35,
+        'C#0/Db0': 17.32,
+        'D0': 18.35,
+        'D#0/Eb0': 19.45,
+        'E0': 20.60,
+        'F0': 21.83,
+        'F#0/Gb0': 23.12,
+        'G0': 24.50,
+        'G#0/Ab0': 25.96,
+        'A0': 27.50,
+        'A#0/Bb0': 29.14,
+        'B0': 30.87,
+        'C1': 32.70,
+        'C#1/Db1': 34.65,
+        'D1': 36.71,
+        'D#1/Eb1': 38.89,
+        'E1': 41.20,
+        'F1': 43.65,
+        'F#1/Gb1': 46.25,
+        'G1': 49.00,
+        'G#1/Ab1': 51.91,
+        'A1': 55.00,
+        'A#1/Bb1': 58.27,
+        'B1': 61.74,
+        'C2': 65.41,
+        'C#2/Db2': 69.30,
+        'D2': 73.42,
+        'D#2/Eb2': 77.78,
+        'E2': 82.41,
+        'F2': 87.31,
+        'F#2/Gb2': 92.50,
+        'G2': 98.00,
+        'G#2/Ab2': 103.83,
+        'A2': 110.00,
+        'A#2/Bb2': 116.54,
+        'B2': 123.47,
+        'C3': 130.81,
+        'C#3/Db3': 138.59,
+        'D3': 146.83,
+        'D#3/Eb3': 155.56,
+        'E3': 164.81,
+        'F3': 174.61,
+        'F#3/Gb3': 185.00,
+        'G3': 196.00,
+        'G#3/Ab3': 207.65,
+        'A3': 220.00,
+        'A#3/Bb3': 233.08,
+        'B3': 246.94,
+        'C4': 261.63,
+        'C#4/Db4': 277.18,
+        'D4': 293.66,
+        'D#4/Eb4': 311.13,
+        'E4': 329.63,
+        'F4': 349.23,
+        'F#4/Gb4': 369.99,
+        'G4': 392.00,
+        'G#4/Ab4': 415.30,
+        'A4': 440.00,
+        'A#4/Bb4': 466.16,
+        'B4': 493.88,
+        'C5': 523.25,
+        'C#5/Db5': 554.37,
+        'D5': 587.33,
+        'D#5/Eb5': 622.25,
+        'E5': 659.25,
+        'F5': 698.46,
+        'F#5/Gb5': 739.99,
+        'G5': 783.99,
+        'G#5/Ab5': 830.61,
+        'A5': 880.00,
+        'A#5/Bb5': 932.33,
+        'B5': 987.77,
+        'C6': 1046.50,
+        'C#6/Db6': 1108.73,
+        'D6': 1174.66,
+        'D#6/Eb6': 1244.51,
+        'E6': 1318.51,
+        'F6': 1396.91,
+        'F#6/Gb6': 1479.98,
+        'G6': 1567.98,
+        'G#6/Ab6': 1661.22,
+        'A6': 1760.00,
+        'A#6/Bb6': 1864.66,
+        'B6': 1975.53,
+        'C7': 2093.00,
+        'C#7/Db7': 2217.46,
+        'D7': 2349.32,
+        'D#7/Eb7': 2489.02,
+        'E7': 2637.02,
+        'F7': 2793.83,
+        'F#7/Gb7': 2959.96,
+        'G7': 3135.96,
+        'G#7/Ab7': 3322.44,
+        'A7': 3520.00,
+        'A#7/Bb7': 3729.31,
+        'B7': 3951.07,
+        'C8': 4186.01,
+        'C#8/Db8': 4434.92,
+        'D8': 4698.63,
+        'D#8/Eb8': 4978.03,
+        'E8': 5274.04,
+        'F8': 5587.65,
+        'F#8/Gb8': 5919.91,
+        'G8': 6271.93,
+        'G#8/Ab8': 6644.88,
+        'A8': 7040.00,
+        'A#8/Bb8': 7458.62,
+        'B8': 7902.13
+    };
+
+    return {
+        all: all
+    };
+
+})();
+
+PixiGame.Synth = PixiGame.Synth || (function() {
+    var notes = PixiGame.Notes.all;
+    var context = {};
+
+    var init = function() {
+        createContext();
+    };
+
+    var playSong = function() {
+        var duration = 0.5,
+            startTime = context.currentTime,
+            song = ['G3', 'A#3/Bb3', 'D#4/Eb4', 'G3', 'A#3/Bb3', 'G#3/Ab3', 'G3'],
+            oscillatorType = 'sine',
+            masterVolume = 0.1;
+
+        for (var i = 0; i < song.length; i++) {
+            play(song[i], startTime + duration * i, duration, oscillatorType, masterVolume);
+        }
+    };
+
+    var playLaser = function() {
+
+        var duration = 0.5,
+            startTime = context.currentTime,
+            song = ['G3'],
+            oscillatorType = 'sine',
+            masterVolume = 0.1;
+
+        for (var i = 0; i < song.length; i++) {
+            play(song[i], startTime + duration * i, duration, oscillatorType, masterVolume);
+        }
+    };
+
+    var createContext = function() {
+        // var context = {};
+        var ContextClass = (window.AudioContext ||
+                window.webkitAudioContext ||
+                window.mozAudioContext ||
+                window.oAudioContext ||
+                window.msAudioContext),
+            buffer, thisSynth = this;
+        if (ContextClass) {
+            // Web Audio API is available.
+            context = new ContextClass();
+        } else {
+            console.error('Browser does not support AudioContext, uh oh!');
+        }
+
+        // context;
+    };
+
+    var play = function(note, startTime, duration, type, volumeLevel) {
+        var osc1 = context.createOscillator(),
+            osc2 = context.createOscillator(),
+            volume = context.createGain(),
+            frequency = notes[note];
+
+        volume.gain.value = volumeLevel;
+
+        // Set oscillator wave type
+        osc1.type = type;
+        osc2.type = type;
+
+        // tune
+        osc1.frequency.value = frequency;
+        osc2.frequency.value = frequency - 3;
+
+        // wire em up
+        osc1.connect(volume);
+        osc2.connect(volume);
+        volume.connect(context.destination);
+
+        // Fade out
+        volume.gain.setValueAtTime(0.1, startTime + duration - 0.25);
+        volume.gain.linearRampToValueAtTime(0, startTime + duration);
+
+        // Start oscillators
+        osc1.start(startTime);
+        osc2.start(startTime);
+
+        // Stop oscillators
+        osc1.stop(startTime + duration);
+        osc2.stop(startTime + duration);
+    };
+
+    return {
+        playSong: playSong,
+        playLaser: playLaser,
+        init: init
+    };
+})();
+
 Utils.Colors = (function() {
     var options = function(type) {
         var color = {};
@@ -197,16 +407,18 @@ PixiGame.GameLoopController = function() {
 
 PixiGame.GameLoopController.constructor = PixiGame.GameLoopController;
 
-PixiGame.GameLoopController.prototype.tick = function() {
+PixiGame.GameLoopController.prototype.tick = function(time) {
     if (!this._isGameActive) {
         return;
     }
 
-    requestAnimationFrame(this.tick.bind(this));
+    window.requestAnimationFrame(this.tick.bind(this));
 
     // update physics
     PixiGame.sceneController.update();
     PixiGame.world.step(1 / this._fps);
+
+    TWEEN.update(time);
 
     // render
     PixiGame.renderer.render(PixiGame.stage);
@@ -273,9 +485,11 @@ PixiGame.BaseScene = (function() {
         hudY = 0,
         hudSizeX = 0,
         hudSizeY = 0;
+    var margin = 0;
 
     var hud = function(self) {
         hudY = PixiGame.height * (2 / 3);
+        this.margin = margin = 5;
         // var optionsContainer = new PIXI.Container();
         // var optionLineSize = 5;
         hudSizeX = this.sizeX = PixiGame.width;
@@ -292,13 +506,13 @@ PixiGame.BaseScene = (function() {
         hudContainer.addChildAt(hudBackground, 0);
 
         // this.position = [];
-        console.log(hudX);
-        console.log(hudY);
+        // console.log(hudX);
+        // console.log(hudY);
         hudContainer.x = hudX;
         hudContainer.y = hudY;
         hudContainer.alpha = 0.5;
 
-        self.addChildAt(hudContainer, 0);
+        self.addChild(hudContainer);
 
         return this;
     };
@@ -306,7 +520,7 @@ PixiGame.BaseScene = (function() {
     //horizontal
     var menu = function(self) {
         this.sizeX = 100;
-        this.sizeY = 55;
+        this.sizeY = 50;
         var options = [{
             text: 'Menu',
             action: mainMenu
@@ -321,9 +535,9 @@ PixiGame.BaseScene = (function() {
         }
 
         // position menu
-        optionsContainer.x = 0;
-        optionsContainer.y = PixiGame.height - this.sizeY + 5;
-        self.addChildAt(optionsContainer, 1);
+        optionsContainer.x = hudX + margin;
+        optionsContainer.y = PixiGame.height - this.sizeY - margin;
+        self.addChild(optionsContainer);
         return this;
     };
 
@@ -371,7 +585,7 @@ PixiGame.BaseScene = (function() {
             });
             logActionText.x = 0;
             logActionText.y = 50;
-            logContainer.addChildAt(logActionText, 2);
+            logContainer.addChild(logActionText);
         }.bind(self);
 
         this.drawAction();
@@ -380,8 +594,8 @@ PixiGame.BaseScene = (function() {
             logActionText.text = logItem;
         }.bind(self);
 
-        logContainer.x = hudX;
-        logContainer.y = hudY;
+        logContainer.x = hudX + 5;
+        logContainer.y = hudY + 5;
 
         self.addChild(logContainer);
 
@@ -403,7 +617,7 @@ PixiGame.BaseScene = (function() {
                 align: 'center'
             });
             turnText.x = PixiGame.width * 2 / 3;
-            turnText.y = PixiGame.height - 50;
+            turnText.y = PixiGame.height - 45;
             self.addChild(turnText);
         }.bind(self);
 
@@ -429,6 +643,196 @@ PixiGame.BaseScene = (function() {
         turn: turn
     };
 })();
+
+PixiGame.AnimationsScene = function() {
+    PIXI.Graphics.call(this);
+
+    this._menu = PixiGame.BaseScene.menu(this);
+
+    this._box = {};
+    this._laser = {};
+
+    //do this last
+    this.setup();
+};
+
+PixiGame.AnimationsScene.constructor = PixiGame.AnimationsScene;
+PixiGame.AnimationsScene.prototype = Object.create(PIXI.Graphics.prototype);
+
+PixiGame.AnimationsScene.prototype.setup = function() {
+    this._box = this.box();
+    this._laser = this.laser();
+    this.controls();
+};
+
+PixiGame.AnimationsScene.prototype.controls = function() {
+
+    var menuWidth = PixiGame.width / 5;
+    var optionSizeY = 40;
+    var options = [{
+        text: 'Box Right',
+        action: this._box.moveRight
+    }, {
+        text: 'Box Left',
+        action: this._box.moveLeft
+    }, {
+        text: 'Laser Right',
+        action: this._laser.moveRight
+    }, {
+        text: 'Laser Left',
+        action: this._laser.moveLeft
+    }, {
+        text: 'Play Song',
+        action: PixiGame.Synth.playSong
+    }];
+
+    var optionsContainer = new PIXI.Container();
+    for (var oi = 0; oi < options.length; oi++) {
+        var option = Utils.OptionFactory.createOption(options[oi], oi, optionSizeY, menuWidth, 'menu');
+        optionsContainer.addChild(option);
+    }
+
+    // position menu
+    optionsContainer.x = 0;
+    optionsContainer.y = 0;
+    this.addChild(optionsContainer);
+};
+
+PixiGame.AnimationsScene.prototype.box = function() {
+    var box = new PIXI.Container();
+    // this._box = box;
+
+    var boxMain = new PIXI.Graphics();
+    boxMain.beginFill(0xE34242);
+    boxMain.lineStyle(1, 0xE34242);
+    boxMain.drawRect(0, 0, 50, 50);
+    boxMain.endFill();
+    boxMain.x = 0;
+    boxMain.y = 0;
+    box.addChild(boxMain);
+
+    box.x = PixiGame.width / 2;
+    box.y = PixiGame.height / 2;
+
+    this.addChild(box);
+    // this._box = box;
+
+    box.moveRight = function() {
+        var coords = {
+            x: box.x,
+            y: box.y
+        };
+        var tween = new TWEEN.Tween(coords)
+            .to({
+                x: coords.x + 100,
+                y: coords.y
+            }, 100)
+            .onUpdate(function() {
+                box.x = this.x;
+                box.y = this.y;
+            })
+            .start();
+    };
+
+    box.moveLeft = function() {
+        var coords = {
+            x: box.x,
+            y: box.y
+        };
+        var tween = new TWEEN.Tween(coords)
+            .to({
+                x: coords.x - 100,
+                y: coords.y
+            }, 100)
+            .onUpdate(function() {
+                box.x = this.x;
+                box.y = this.y;
+            })
+            .start();
+    };
+
+    return box;
+};
+
+PixiGame.AnimationsScene.prototype.laser = function() {
+    var laser = new PIXI.Container();
+    // this._box = box;
+
+    var laserMain = new PIXI.Graphics();
+    laserMain.beginFill(0x3C8025);
+    laserMain.lineStyle(1, 0x3C8025);
+    laserMain.drawRect(0, 0, 50, 2);
+    laserMain.endFill();
+    laserMain.x = 0;
+    laserMain.y = 0;
+    laser.addChild(laserMain);
+
+    laser.x = PixiGame.width / 2;
+    laser.y = PixiGame.height / 2;
+
+    this.addChild(laser);
+    // this._box = laser;
+
+    laser.start = function() {
+        laser.alpha = 1;
+        PixiGame.Synth.playLaser();
+    };
+
+    laser.complete = function() {
+        laser.alpha = 0;
+    };
+
+    laser.update = function() {
+        laser.x = this.x;
+        laser.y = this.y;
+    };
+
+    laser.moveRight = function() {
+        var coords = {
+            x: laser.x,
+            y: laser.y
+        };
+        var tween = new TWEEN.Tween(coords)
+            .to({
+                x: coords.x + 100,
+                y: coords.y
+            }, 100)
+            .onStart(laser.start)
+            .onComplete(laser.complete)
+            .onUpdate(laser.update)
+            .start();
+    };
+
+    laser.moveLeft = function() {
+        var coords = {
+            x: laser.x,
+            y: laser.y
+        };
+        var tween = new TWEEN.Tween(coords)
+            .to({
+                x: coords.x - 100,
+                y: coords.y
+            }, 100)
+            .onStart(laser.start)
+            .onComplete(laser.complete)
+            .onUpdate(laser.update)
+            .start();
+    };
+
+    return laser;
+};
+
+PixiGame.AnimationsScene.prototype.update = function() {
+    // this._box.moveRight();
+};
+
+PixiGame.AnimationsScene.prototype.gameEnd = function(event) {
+    PixiGame.sceneController.requestSceneChange(PixiGame.MainMenuScene);
+};
+
+PixiGame.AnimationsScene.prototype.destroy = function() {
+    this.removeChildren();
+};
 
 PixiGame.MainMenuScene = function() {
     PIXI.Graphics.call(this);
@@ -458,13 +862,16 @@ PixiGame.MainMenuScene.prototype.setup = function() {
 
     var options = [{
         text: 'Space',
-        action: this.handlePlayButtonPressed.bind(this)
+        action: this.handleSpace.bind(this)
     }, {
         text: 'Conversation',
-        action: this.handleRPGPlayButtonPressed.bind(this)
+        action: this.handleConversation.bind(this)
     }, {
         text: 'Combat',
-        action: this.handleCombatPlayButtonPressed.bind(this)
+        action: this.handleCombat.bind(this)
+    }, {
+        text: 'Animations',
+        action: this.handleAnimations.bind(this)
     }];
 
     var optionsContainer = new PIXI.Container();
@@ -479,16 +886,20 @@ PixiGame.MainMenuScene.prototype.setup = function() {
     this.addChild(optionsContainer);
 };
 
-PixiGame.MainMenuScene.prototype.handleRPGPlayButtonPressed = function(event) {
+PixiGame.MainMenuScene.prototype.handleConversation = function(event) {
     PixiGame.sceneController.requestSceneChange(PixiGame.RPGScene);
 };
 
-PixiGame.MainMenuScene.prototype.handlePlayButtonPressed = function(event) {
+PixiGame.MainMenuScene.prototype.handleSpace = function(event) {
     PixiGame.sceneController.requestSceneChange(PixiGame.GameScene);
 };
 
-PixiGame.MainMenuScene.prototype.handleCombatPlayButtonPressed = function(event) {
+PixiGame.MainMenuScene.prototype.handleCombat = function(event) {
     PixiGame.sceneController.requestSceneChange(PixiGame.CombatScene);
+};
+
+PixiGame.MainMenuScene.prototype.handleAnimations = function(event) {
+    PixiGame.sceneController.requestSceneChange(PixiGame.AnimationsScene);
 };
 
 PixiGame.MainMenuScene.prototype.update = function() {};
@@ -500,6 +911,8 @@ PixiGame.MainMenuScene.prototype.destroy = function() {
 
 PixiGame.GameScene = function() {
     PIXI.Graphics.call(this);
+
+    this._menu = PixiGame.BaseScene.menu(this);
 
     this._player = {
         score: 0,
@@ -942,6 +1355,8 @@ PixiGame.GameScene.prototype.destroy = function() {
 PixiGame.RPGScene = function() {
     PIXI.Graphics.call(this);
 
+    this._menu = PixiGame.BaseScene.menu(this);
+
     this._colorMap = {
         'neutral': 0xB8D65C,
         'good': 0x5CD683,
@@ -1117,7 +1532,7 @@ PixiGame.CombatScene.prototype.setup = function() {
 
 PixiGame.CombatScene.prototype.setupAllHealth = function() {
     // var playerHealthX = this._menu.sizeX;
-    this.setupHealth(this._player, this._menu.sizeX, PixiGame.height - 50);
+    this.setupHealth(this._player, this._menu.sizeX + (this._hud.margin * 3), PixiGame.height - 50 - this._hud.margin);
     this.setupHealth(this._enemy, (PixiGame.width * 2 / 3), 0);
 };
 
@@ -1196,8 +1611,8 @@ PixiGame.CombatScene.prototype.setupCombat = function() {
         var combatOption = Utils.OptionFactory.createOption(this._attacks[ci], ci, optionSizeY, optionSizeX, 'attack');
         combatContainer.addChildAt(combatOption, ci);
     }
-    combatContainer.x = PixiGame.width * 2 / 3;
-    combatContainer.y = PixiGame.height * 2 / 3;
+    combatContainer.x = PixiGame.width * 2 / 3 - this._hud.margin;
+    combatContainer.y = PixiGame.height * 2 / 3 + this._hud.margin;
     // combatContainer.y = 50;
     this.addChild(combatContainer);
 
@@ -1226,7 +1641,7 @@ PixiGame.CombatScene.prototype.handleCombatOptionTouch = function(e) {
     var min = e.target.meta.min;
     var max = e.target.meta.max;
     var damage = Math.floor(Math.random() * (max - min + 1)) + min;
-    this._log.updateAction('player performs ' + e.target.meta.text);
+    this._log.updateAction(this._player.name + ' performs ' + e.target.meta.text);
     this._enemy.updateHealth(damage);
     this._turn.update(false);
     this.enemyTurn();
@@ -1245,7 +1660,7 @@ PixiGame.CombatScene.prototype.enemyTurn = function(e) {
 
     window.setTimeout(function() {
         this._player.updateHealth(damage);
-        this._log.updateAction('enemy performs ' + attack.text);
+        this._log.updateAction(this._enemy.name + ' performs ' + attack.text);
         this._turn.update(true);
         // console.log('enemy turn over');
     }.bind(this), enemyTurnTime);
@@ -1363,6 +1778,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Game state
     PixiGame.score = 0;
     PixiGame.highScore = 0;
+
+    // Sounds
+    PixiGame.Synth.init();
 
     // start game
     PixiGame.gameLoopController = new PixiGame.GameLoopController();
