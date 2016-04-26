@@ -290,7 +290,9 @@ Utils.Colors = (function() {
     var space = function() {
         var color = {
             stars: 0xE6EBED,
+            smallPlanets: 0xE34242,
             planets: 0x48CBF7,
+            comets: 0xC1D490,
             player: {
                 hull: 0xBAC6D6,
                 outline: 0x0B3542,
@@ -1781,6 +1783,7 @@ PixiGame.SpaceMusicScene = function() {
     this._background = null;
     this._midground = null;
     this._colors = Utils.Colors.space();
+    this._hud = null;
 
     this._player = {
         score: 0,
@@ -1799,7 +1802,8 @@ PixiGame.SpaceMusicScene = function() {
             speed: 50,
             max: 1,
             size: 5
-        }
+        },
+        indicator: null
     };
 
     this._enemies = {
@@ -1812,7 +1816,15 @@ PixiGame.SpaceMusicScene = function() {
 
     this._planets = {
         count: 20,
-        size: 200
+        size: 200,
+        collection: []
+    };
+
+    this._comets = {
+        count: 1,
+        spawnSpeed: 3000,
+        size: 10,
+        collection: []
     };
 
     this._stars = {
@@ -1840,12 +1852,18 @@ PixiGame.SpaceMusicScene.prototype.setupCamera = function() {
     this._camera = new PIXI.Container();
     this.addChild(this._camera);
     this.setupPlayer();
+    // this.setupHud();
+
+    // this._hud.playerGraphicsPosition(this._player, this._camera);
+    // this._hud.playerBodyPosition(this._player,this._camera);
 };
 
 PixiGame.SpaceMusicScene.prototype.setupWorld = function() {
     this._world = new PIXI.Container();
     this.addChild(this._world);
     this.setupPlanets();
+    this.setupSmallPlanets();
+    this.setupComets();
 };
 
 PixiGame.SpaceMusicScene.prototype.setupBackground = function() {
@@ -1858,6 +1876,45 @@ PixiGame.SpaceMusicScene.prototype.setupMidground = function() {
     this._midground = new PIXI.Container();
     this.addChild(this._midground);
     this.setupCloseStars();
+};
+
+PixiGame.SpaceMusicScene.prototype.setupHud = function() {
+    var hud = this._hud = new PIXI.Container();
+    hud.diag = new PIXI.Container();
+
+    hud.diag.pgxText = function() {
+        return 'pbx: ' + Math.round(this._player.body.position[0]);
+    }.bind(this);
+
+    hud.diag.pgyText = function() {
+        return 'pby: ' + Math.round(this._player.body.position[0]);
+    }.bind(this);
+
+    var pgxText = new PIXI.Text(hud.diag.pgxText(), {
+        font: '24px Arial',
+        fill: 0xff1010,
+        align: 'center',
+    });
+    var pgyText = new PIXI.Text(hud.diag.pgyText(), {
+        font: '24px Arial',
+        fill: 0xff1010,
+        align: 'center',
+    });
+
+    pgyText.y = 20;
+
+    hud.diag.update = function() {
+        var diag = this._camera.getChildAt(2);
+        var pgxText = diag.getChildAt(0);
+        var pgyText = diag.getChildAt(1);
+        pgxText.text = diag.pgxText();
+        pgyText.text = diag.pgyText();
+    }.bind(this);
+
+    hud.diag.addChildAt(pgxText, 0);
+    hud.diag.addChildAt(pgyText, 1);
+    hud.addChild(hud.diag);
+    this._camera.addChildAt(hud, 2);
 };
 
 PixiGame.SpaceMusicScene.prototype.playerFire = function() {
@@ -1873,6 +1930,9 @@ PixiGame.SpaceMusicScene.prototype.playerFire = function() {
         }),
         active: false
     };
+
+    // audio
+    PixiGame.Synth.playLaser();
 
     // adjust physics
     bullet.body.velocity[0] += magnitude * Math.cos(angle);
@@ -1927,9 +1987,14 @@ PixiGame.SpaceMusicScene.prototype.setupPlanets = function() {
         // var x = Math.round(Math.random() * (PixiGame.width));
         // var y = Math.round(Math.random() * (PixiGame.height));
 
-        var quadrant = quadrants[Math.floor(Math.random() * 4)];
-        x += Math.round(Math.random() * this._planets.size * 5) * quadrant[0];
-        y += Math.round(Math.random() * this._planets.size * 5) * quadrant[1];
+        if (i === 0) {
+            x = 100;
+            y = 100;
+        } else {
+            var quadrant = quadrants[Math.floor(Math.random() * 4)];
+            x += Math.round(Math.random() * this._planets.size * 5) * quadrant[0];
+            y += Math.round(Math.random() * this._planets.size * 5) * quadrant[1];
+        }
 
 
         var planetPosition = [x, y];
@@ -1959,6 +2024,132 @@ PixiGame.SpaceMusicScene.prototype.setupPlanets = function() {
         planet.graphics.y = planetPosition[1];
         this._world.addChild(planet.graphics);
     }
+};
+
+PixiGame.SpaceMusicScene.prototype.setupSmallPlanets = function() {
+
+    // var gridx = PixiGame.width * (this._planets.size * 2);
+    // var gridy = PixiGame.height * (this._planets.size * 2);
+
+    var x = 0;
+    var y = 0;
+    var quadrants = [
+        [1, 1],
+        [1, -1],
+        [-1, 1],
+        [-1, -1]
+    ];
+
+    for (var i = 0; i < this._planets.count; i++) {
+        // var x = Math.round(Math.random() * (PixiGame.width));
+        // var y = Math.round(Math.random() * (PixiGame.height));
+
+        if (i === 0) {
+            x = 300;
+            y = 300;
+        } else {
+            var quadrant = quadrants[Math.floor(Math.random() * 4)];
+            x += Math.round(Math.random() * this._planets.size * 5) * quadrant[0];
+            y += Math.round(Math.random() * this._planets.size * 5) * quadrant[1];
+        }
+
+
+        var planetPosition = [x, y];
+        var planet = {
+            body: new p2.Body({
+                position: planetPosition,
+                mass: 0.001,
+                damping: 0,
+                angularDamping: 0
+            }),
+            graphics: new PIXI.Container(),
+            size: this._planets.size
+        };
+
+        var planetShape = new p2.Circle({
+            radius: planet.size
+        });
+        planet.body.addShape(planetShape);
+        PixiGame.world.addBody(planet.body);
+
+        var planetGraphics = new PIXI.Graphics();
+        planetGraphics.beginFill(this._colors.smallPlanets);
+        planetGraphics.drawCircle(0, 0, planet.size / 2);
+        planetGraphics.endFill();
+        planet.graphics.addChild(planetGraphics);
+        planet.graphics.x = planetPosition[0];
+        planet.graphics.y = planetPosition[1];
+        this._world.addChild(planet.graphics);
+        this._planets.collection.push(planet);
+    }
+};
+
+
+PixiGame.SpaceMusicScene.prototype.setupComets = function() {
+
+    // var gridx = PixiGame.width * (this._planets.size * 2);
+    // var gridy = PixiGame.height * (this._planets.size * 2);
+
+    var x = 0;
+    var y = 0;
+    var quadrants = [
+        [1, 1],
+        [1, -1],
+        [-1, 1],
+        [-1, -1]
+    ];
+
+    var enemyTimer = setInterval(function() {
+        for (var i = 0; i < this._comets.count; i++) {
+            // var x = Math.round(Math.random() * (PixiGame.width));
+            // var y = Math.round(Math.random() * (PixiGame.height));
+
+            if (i === 0) {
+                x = 300;
+                y = 300;
+            } else {
+                var quadrant = quadrants[Math.floor(Math.random() * 4)];
+                x += Math.round(Math.random() * this._planets.size * 5) * quadrant[0];
+                y += Math.round(Math.random() * this._planets.size * 5) * quadrant[1];
+            }
+
+
+            var cometPosition = [x, y];
+            var comet = {
+                body: new p2.Body({
+                    position: cometPosition,
+                    mass: 0.001,
+                    damping: 0,
+                    angularDamping: 0
+                }),
+                graphics: new PIXI.Container(),
+                size: this._comets.size
+            };
+
+            var planetShape = new p2.Circle({
+                radius: comet.size
+            });
+            comet.body.addShape(planetShape);
+
+
+            var x = Math.round(Math.random() * 3);
+            var y = Math.round(Math.random() * 3);
+            comet.body.force[0] = x;
+            comet.body.force[1] = y;
+            PixiGame.world.addBody(comet.body);
+
+            var cometGraphics = new PIXI.Graphics();
+            cometGraphics.beginFill(this._colors.comets);
+            cometGraphics.drawCircle(0, 0, comet.size);
+            cometGraphics.endFill();
+            comet.graphics.addChild(cometGraphics);
+            comet.graphics.x = cometPosition[0];
+            comet.graphics.y = cometPosition[1];
+            this._comets.collection.push(comet);
+            this._world.addChild(comet.graphics);
+
+        }
+    }.bind(this), this._comets.spawnSpeed);
 };
 
 PixiGame.SpaceMusicScene.prototype.setupStars = function() {
@@ -2069,7 +2260,7 @@ PixiGame.SpaceMusicScene.prototype.setupPlayer = function() {
     player.body = new p2.Body({
         mass: 1,
         angularVelocity: 0,
-        damping: 0,
+        damping: 0.05,
         angularDamping: 0,
         position: [PixiGame.width / 2, PixiGame.height / 2]
     });
@@ -2139,11 +2330,14 @@ PixiGame.SpaceMusicScene.prototype.setupPlayer = function() {
     indicator.endFill();
     indicator.pivot.x = player.size;
     indicator.pivot.y = player.size;
-    indicator.x = player.size / 2;
-    indicator.y = player.size / 2;
+    indicator.x = player.graphics.x;
+    indicator.y = player.graphics.y;
+    // indicator.x = player.size / 2;
+    // indicator.y = player.size / 2;
+    this._player.indicator = indicator;
     // indicator.
-    indicator.alpha = 0.0; //hide for now
-    player.graphics.addChildAt(indicator, 5);
+    // indicator.alpha = 0.0; //hide for now
+    // player.graphics.addChildAt(indicator, 5);
 
     player.graphics.pivot.x = player.size / 2;
     player.graphics.pivot.y = player.size / 2;
@@ -2152,7 +2346,8 @@ PixiGame.SpaceMusicScene.prototype.setupPlayer = function() {
     player.graphics.y = PixiGame.height / 2;
     // this.addChild(player.graphics);
     // PixiGame.camera.addChild(player.graphics);
-    this._camera.addChild(player.graphics);
+    this._camera.addChildAt(player.graphics, 0);
+    this._camera.addChildAt(indicator, 1);
 };
 
 PixiGame.SpaceMusicScene.prototype.update = function() {
@@ -2162,12 +2357,14 @@ PixiGame.SpaceMusicScene.prototype.update = function() {
     var controls = PixiGame.controls.state();
     var playerEngine = player.graphics.getChildAt(1);
     var bullets = player.bullets.collection;
-    var playerIndicator = player.graphics.getChildAt(5);
+    var playerIndicator = player.indicator; //player.graphics.getChildAt(5);
 
     // playerIndicator.pivot.x = player.size * 2;
     // playerIndicator.pivot.y = player.size * 2;
     var inAngle = Math.atan2(player.body.position[1], player.body.position[0]);
-    playerIndicator.rotation = player.graphics.rotation - inAngle;
+    // console.log('inAngle: ' + inAngle);
+    playerIndicator.rotation = inAngle * (Math.PI / 2); // + inAngle;
+    // playerIndicator.x =
 
 
 
@@ -2256,6 +2453,14 @@ PixiGame.SpaceMusicScene.prototype.update = function() {
         player.body.force[1] += player.speed * Math.sin(strafeAngle);
     }
 
+    //update comets
+    this._comets.collection.forEach(function(c) {
+        c.graphics.x = c.body.position[0];
+        c.graphics.y = c.body.position[1];
+    });
+
+
+
     // warp player on boundaries
     var x = player.body.position[0],
         y = player.body.position[1];
@@ -2312,13 +2517,48 @@ PixiGame.SpaceMusicScene.prototype.update = function() {
             return false;
         };
 
-        var planet = this._rhythmPlanet;
-        //if planet involved
-        if (e.bodyB.id === planet.body.id || e.bodyA.id === planet.body.id) {
-            //if player bullets were also involved
-            if (containsBody(player.bullets.collection, e.bodyA.id, e.bodyB.id)) {
-                planet.graphics.alpha = 0.1;
-                PixiGame.Synth.playSong();
+        var comets = this._comets.collection;
+
+        //comets
+        for (var z = 0; z < comets.length; z++) {
+            var comet = comets[z];
+            // if enemy was involved
+            if (e.bodyB.id === comet.body.id || e.bodyA.id === comet.body.id) {
+
+                // console.log('comet hit');
+                //if player bullets were also involved
+                if (containsBody(player.bullets.collection, e.bodyA.id, e.bodyB.id)) {
+                    comet.graphics.alpha = 0.0;
+                    console.log('bullet hit comet');
+                    // this.removeChild(enemy.graphics);
+                    var hitComet = comets.splice(z, 1)[0];
+                    this.removeChild(hitComet.graphics);
+                    // this._enemies.amount--;
+                    // this.score.update(5);
+                    // this.hud().score.update(5);
+                }
+            }
+        }
+
+        //planets
+        var planets = this._planets.collection;
+        for (var y = 0; y < comets.length; y++) {
+            var planet = planets[y];
+            // if planet was involved
+            if (e.bodyB.id === planet.body.id || e.bodyA.id === planet.body.id) {
+
+                // console.log('planet hit');
+                //if player bullets were also involved
+                if (containsBody(player.bullets.collection, e.bodyA.id, e.bodyB.id)) {
+                    planet.graphics.alpha = 0.0;
+                    console.log('bullet hit planet');
+                    // this.removeChild(enemy.graphics);
+                    var hitPlanet = planets.splice(y, 1)[0];
+                    this.removeChild(hitPlanet.graphics);
+                    // this._enemies.amount--;
+                    // this.score.update(5);
+                    // this.hud().score.update(5);
+                }
             }
         }
     }.bind(this));
@@ -2331,6 +2571,11 @@ PixiGame.SpaceMusicScene.prototype.update = function() {
     //     hitShield.alpha = 0;
     //   }
     // }.bind(this));
+
+    /* Update Diagnositics */
+    // this._hud.playerGraphicsPosition().update();
+    // this._hud.playerBodyPosition().update(player);
+    // this._hud.diag.update();
 };
 
 PixiGame.SpaceMusicScene.prototype.gameEnd = function(event) {
