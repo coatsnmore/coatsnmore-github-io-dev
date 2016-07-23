@@ -1,0 +1,15 @@
+.nc-nav {
+  background-color: white
+}
+
+.nc-jumbotron {
+  background-color: white
+}
+
+.nc-container {
+  background-color: white
+}
+
+.nc-nav ul li:hover{
+  background-color: #CC7C62
+}
