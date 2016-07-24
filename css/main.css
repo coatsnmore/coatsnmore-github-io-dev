@@ -1,15 +1,102 @@
-.nc-nav {
-  background-color: white
+.nc-footer div {
+  /*background-color: #A0CFDE;*/
+  height: 200px;
+  /*width: 30%;*/
+  display: block;
+  /*position: absolute;*/
+  /*left:0px;*/
+  /*margin: 0.5em;*/
+  font: 12px 'Arial' !important;
 }
 
+.nc-github-button {
+  padding: 1em;
+  padding-left: 0em;
+}
+
+.nc-collapse{
+  border: none;
+}
+
+.nc-nav {
+  background-color: white;
+}
+
+#nc-nav-border {
+  border: 1px solid #A0CFDE;
+}
+
+/*.nc-nav div {
+  border: 1px solid #A0CFDE;
+}*/
+
+.nc-jumbotron, .nc-jumbotron p {
+  background-color: white;
+  font: 12px 'Arial';
+}
+
+.nc-jumbotron img {
+  height: 100%;
+  width: 100%;
+  padding-left: 3em;
+  padding-top: 0px;
+
+}
+
+@media screen and (min-width: 768px)
 .nc-jumbotron {
-  background-color: white
+  padding-top: 0px;
 }
 
 .nc-container {
-  background-color: white
+  /*font: 1.2em 'Arial-Black' !important;*/
+  color: black;
+  font: 12px 'Arial';
+  background-color: white;
+}
+
+.nc-nav ul li{
+  /*background-color: #CC7C62;*/
+    /*font: 0.9em 'Arial';*/
+    /*font-size:  1em !important;*/
 }
 
 .nc-nav ul li:hover{
-  background-color: #CC7C62
+  /* red*/
+  background-color: #DEAFA0;
+  /*green*/
+  /*background-color: #B0DEA0;*/
+  /*blue*/
+  /*background-color: #A0CFDE; */
+  /*purple CEA0DE*/
+}
+.navbar-default .navbar-nav>.active>a,.navbar-default .navbar-nav>.active>a:focus,
+.navbar-default .navbar-nav>.active>a:hover{
+  color:black;
+  background-color:#B0DEA0;
+}
+
+.nc-body {
+  font: 12px 'Arial';
+}
+
+.nc-brand {
+  font: 14px 'Arial Black' !important;
+  border: none !important;
+  /*margin-top: -5%;*/
+}
+
+.nc-html {
+  font: 12px 'Arial' !important;
+}
+
+.nc-dropdown  li a{
+  font: 11px 'Arial' !important;
+  /*font: 1em 'Arial' !important;*/
+
+}
+
+nav>.open>a:hover {
+    color: #555;
+    background-color: #e7e7e7;
 }
