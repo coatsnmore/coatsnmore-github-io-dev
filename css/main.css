@@ -26,12 +26,16 @@
   border: 1px solid #A0CFDE;
 }
 
+#nc-nav-blog a:hover {
+  background-color: #DBDEA0;
+}
+
 /*.nc-nav div {
   border: 1px solid #A0CFDE;
 }*/
 
 .nc-jumbotron, .nc-jumbotron p {
-  background-color: white;
+  background-color: #A0CFDE;
   font: 12px 'Arial';
 }
 
@@ -63,9 +67,9 @@
 
 .nc-nav ul li:hover{
   /* red*/
-  background-color: #DEAFA0;
+  /*background-color: #DEAFA0;*/
   /*green*/
-  /*background-color: #B0DEA0;*/
+  background-color: #B0DEA0;
   /*blue*/
   /*background-color: #A0CFDE; */
   /*purple CEA0DE*/
@@ -73,7 +77,7 @@
 .navbar-default .navbar-nav>.active>a,.navbar-default .navbar-nav>.active>a:focus,
 .navbar-default .navbar-nav>.active>a:hover{
   color:black;
-  background-color:#B0DEA0;
+  background-color:#A0CFDE;
 }
 
 .nc-body {
@@ -93,10 +97,13 @@
 .nc-dropdown  li a{
   font: 11px 'Arial' !important;
   /*font: 1em 'Arial' !important;*/
+}
 
+.nc-dropdown-menu li a:hover {
+  background-color: #B0DEA0;
 }
 
 nav>.open>a:hover {
     color: #555;
-    background-color: #e7e7e7;
+    background-color: #B0DEA0;
 }
